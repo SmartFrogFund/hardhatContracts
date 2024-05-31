@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "@typechain/*": [
+        "typechain-types/*"
+      ]
+    },
+    "typeRoots": [
+      "./node_modules/@types",
+      "./node_modules"
+    ],
+    "types": [
+      "node",
+      "@typechain/hardhat"
+    ]
+    // optional:
+    // "suppressImplicitAnyIndexErrors": true
+  },
+  "include": [
+    "./scripts",
+    "./test",
+    "./deploy",
+    "./deploy-helpers"
+  ],
+  "files": [
+    "./hardhat.config.ts",
+    "./helper-hardhat-config.ts"
+  ]
+}
