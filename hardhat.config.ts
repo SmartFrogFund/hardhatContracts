@@ -17,7 +17,11 @@ const {
 } = process.env;
 
 const config: HardhatUserConfig = {
-	solidity: '0.8.24',
+    solidity: '0.8.24',
+    // typechain: {
+    //     // outDir: "typechain",
+    //     // target: "ethers-v5",
+    // },
 	defaultNetwork: 'hardhat',
 	networks: {
 		hardhat: {
@@ -31,6 +35,10 @@ const config: HardhatUserConfig = {
 			url: SEPOLIA_RPC_URL,
 			accounts: SEPOLIA_PRIVATE_KEY ? [SEPOLIA_PRIVATE_KEY] : [],
 		},
+         lineaSepolia: {
+            url: `https://linea-sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
+            accounts: [`0x${process.env.PRIVATE_KEY}`]  // 你的私钥，需要将其保存到环境变量中
+        },
 	},
 	etherscan: {
 		apiKey: {
