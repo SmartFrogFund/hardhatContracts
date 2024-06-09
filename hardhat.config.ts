@@ -8,7 +8,11 @@ import 'hardhat-deploy-ethers';
 import '@nomicfoundation/hardhat-chai-matchers';
 import '@nomicfoundation/hardhat-verify';
 const config: HardhatUserConfig = {
-	solidity: '0.8.24',
+    solidity: '0.8.24',
+    typechain: {
+        outDir: "typechain",
+        target: "ethers-v5",
+    },
 };
 
 export default config;
