@@ -37,7 +37,7 @@ const config: HardhatUserConfig = {
 		},
          lineaSepolia: {
             url: `https://linea-sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
-            accounts: [`0x${process.env.PRIVATE_KEY}`]  // 你的私钥，需要将其保存到环境变量中
+            accounts: [`0x${process.env.SEPOLIA_PRIVATE_KEY}`]  // 你的私钥，需要将其保存到环境变量中
         },
 	},
 	etherscan: {
