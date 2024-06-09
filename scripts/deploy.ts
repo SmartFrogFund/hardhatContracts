@@ -1,3 +1,5 @@
+// npx hardhat run scripts/deploy.ts --network lineaSepolia
+
 import hre from "hardhat";
 
 async function main() {
