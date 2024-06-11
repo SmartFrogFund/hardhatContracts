@@ -56,7 +56,9 @@ describe("FrogFund", function () {
       const title = "Project Title";
       const description = "Project Description";
       const link = "http://project-link.com";
-      await frogFund.connect(addr1).createProject(title, description, link, goalAmount, deadline);
+      await frogFund
+        .connect(addr1)
+        .createProject(title, description, link, goalAmount, deadline);
       const project = await frogFund.projects(0);
 
       expect(project.creator).to.equal(addr1.address);
@@ -66,12 +68,27 @@ describe("FrogFund", function () {
       expect(project.completed).to.equal(false);
       expect(project.currentProgress).to.equal(0);
     });
+    it("Should fail if goal amount is zero", async function () {
+      const title = "Project Title";
+      const description = "Project Description";
+      const link = "http://project-link.com";
+      const goalAmount = 0;
+      const deadline =
+        (await ethers.provider.getBlock("latest")).timestamp + 86400; // 未来一天
+      console.log(deadline, "@@@");
+      await expect(
+        frogFund
+          .connect(addr1)
+          .createProject(title, description, link, goalAmount, deadline)
+      ).to.be.revertedWith("Goal amount must be greater than 0");
+    });
   });
+
   //   // 赞助项目
   describe("supportProject", function () {
     it("Should allow users to support a project", async function () {
       time.advanceBlock();
-       const title = "Project Title";
+      const title = "Project Title";
       const description = "Project Description";
       const link = "http://project-link.com";
       const goalAmount = ethers.parseUnits("500", 18);
@@ -79,7 +96,9 @@ describe("FrogFund", function () {
         .add(time.duration.days(7))
         .toNumber();
 
-      await frogFund.connect(addr1).createProject(title, description, link,goalAmount, deadline);
+      await frogFund
+        .connect(addr1)
+        .createProject(title, description, link, goalAmount, deadline);
 
       const supportAmount = ethers.parseUnits("100", 18);
       console.log(`授权 token 转移...`);
