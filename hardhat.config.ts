@@ -8,6 +8,7 @@ import 'hardhat-deploy-ethers';
 import '@nomicfoundation/hardhat-chai-matchers';
 import '@nomicfoundation/hardhat-verify';
 import "@nomiclabs/hardhat-web3";
+// import "@nomiclabs/hardhat-etherscan";
 const {
 	SEPOLIA_RPC_URL,
 	SEPOLIA_API_KEY,
@@ -37,20 +38,22 @@ const config: HardhatUserConfig = {
 		},
          lineaSepolia: {
             url: `https://linea-sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
-            accounts: [`0x${process.env.SEPOLIA_PRIVATE_KEY}`]  // 你的私钥，需要将其保存到环境变量中
+            accounts: [`0x${process.env.SEPOLIA_PRIVATE_KEY}`],  // 你的私钥，需要将其保存到环境变量中
+            timeout: 200000, // 增加超时时间为200秒
         },
 	},
 	etherscan: {
 		apiKey: {
 			sepolia: ETHERSCAN_API_KEY || '',
+			lineaSepolia: ETHERSCAN_API_KEY || '',
 		},
 		customChains: [
 			{
 				network: 'lineaSepolia',
-				chainId: 11155111,
+				 chainId: 59141,
 				urls: {
-					apiURL: 'https://api-sepolia.etherscan.io/api',
-					browserURL: 'https://sepolia.etherscan.io',
+					apiURL: 'https://api-sepolia.lineascan.build/api',
+					browserURL: 'https://api-sepolia.lineascan.build/',
 				},
 			},
 		],
