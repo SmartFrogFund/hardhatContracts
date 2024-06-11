@@ -7,7 +7,7 @@ async function main() {
   const Token = await ethers.getContractFactory("MyToken");
   const token = await Token.attach(
     "0x091b968956756fd32e167dc3cebc9f3023817af8"
-  )as MyToken;
+  ) as MyToken;
   console.log("token:", owner);
   const balance = await token.balanceOf(owner.address);
   const name = await token.name();
