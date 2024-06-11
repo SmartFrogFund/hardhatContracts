@@ -50,7 +50,7 @@ const config: HardhatUserConfig = {
 		customChains: [
 			{
 				network: 'lineaSepolia',
-				 chainId: 59141,
+				chainId: 59141,
 				urls: {
 					apiURL: 'https://api-sepolia.lineascan.build/api',
 					browserURL: 'https://api-sepolia.lineascan.build/',
