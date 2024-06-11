@@ -7,7 +7,7 @@ import '@nomicfoundation/hardhat-ethers';
 import 'hardhat-deploy-ethers';
 import '@nomicfoundation/hardhat-chai-matchers';
 import '@nomicfoundation/hardhat-verify';
-
+import "@nomiclabs/hardhat-web3";
 const {
 	SEPOLIA_RPC_URL,
 	SEPOLIA_API_KEY,
