@@ -7,6 +7,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract FrogFund is Ownable {
     struct Project {
         address payable creator; // 项目发起人
+        string title; // 项目标题
+        string description; // 项目描述
+        string link; // 项目链接
         uint256 goalAmount; // 目标筹集金额
         uint256 currentAmount; // 当前筹集金额
         uint256 deadline; // 截止日期
@@ -52,14 +55,23 @@ contract FrogFund is Ownable {
 
     constructor(address _tokenAddress) Ownable(msg.sender) {
         token = IERC20(_tokenAddress);
-        transferOwnership(msg.sender); 
+        transferOwnership(msg.sender);
     }
-    function createProject(uint256 _goalAmount, uint256 _deadline) external {
+    function createProject(
+        string memory _title,
+        string memory _description,
+        string memory _link,
+        uint256 _goalAmount,
+        uint256 _deadline
+    ) external {
         require(_goalAmount > 0, "Goal amount must be greater than 0");
         require(_deadline > block.timestamp, "Deadline must be in the future");
 
         projects[projectCount] = Project({
             creator: payable(msg.sender),
+            title: _title,
+            description: _description,
+            link: _link,
             goalAmount: _goalAmount,
             currentAmount: 0,
             deadline: _deadline,

@@ -17,16 +17,17 @@
     ],
     "types": [
       "node",
-      "@typechain/hardhat"
+      "@typechain/hardhat",
+      "mocha"
     ]
     // optional:
     // "suppressImplicitAnyIndexErrors": true
   },
   "include": [
-    "./scripts",
-    "./test",
-    "./deploy",
-    "./deploy-helpers"
+    "./scripts/*",
+    "./test/*",
+    "./deploy/*",
+    "./deploy-helpers/*"
   ],
   "files": [
     "./hardhat.config.ts",
