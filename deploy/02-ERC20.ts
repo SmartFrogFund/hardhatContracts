@@ -14,7 +14,7 @@ const deployERC20: DeployFunction = async function (
 
   const erc20 = await deploy("MyToken", {
     from: deployer,
-    args: [2000],
+    args: [1000000],
     log: true,
   });
 

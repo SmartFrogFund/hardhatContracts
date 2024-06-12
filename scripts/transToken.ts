@@ -5,10 +5,10 @@ const { ethers } = hre;
 import { MyToken } from "../typechain-types";
 async function main() {
   const [sender] = await ethers.getSigners();
-  const recipient = "0x2011862879eE9F98F593C79e5c14bB5325306d75"; // 替换为接收方的钱包地址
-  const amount = ethers.parseUnits("100", 18); // 替换为要转账的数量，这里假设代币有18位小数
+  const recipient = "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318"; // 替换为接收方的钱包地址
+  const amount = ethers.parseUnits("1234", 18); // 替换为要转账的数量，这里假设代币有18位小数
 
-  const tokenAddress = "0x091b968956756fd32e167dc3cebc9f3023817af8"; // 替换为你的代币合约地址
+  const tokenAddress = "0xe7f1725e7734ce288f8367e1bb143e90bb3f0512"; // 替换为你的代币合约地址
   const Token = await ethers.getContractFactory("MyToken");
   const token = Token.attach(tokenAddress) as MyToken;
 
