@@ -22,11 +22,19 @@ contract FrogFund is Ownable {
     mapping(uint256 => Project) public projects;
     mapping(uint256 => mapping(address => uint256)) public contributions;
     mapping(uint256 => mapping(address => uint256)) public ethContributions;
-    mapping(uint256 => string) public progressDetails;
-    mapping(uint256 => string) public approvalComments;
+    mapping(uint256 => mapping(uint256 => string)) public progressDetails; // projectId => progress => details
+    mapping(uint256 => mapping(uint256 => string)) public approvalComments; // projectId => progress => comment
     mapping(address => uint256) public creatorBalances; // 记录每个项目发起人的ERC20余额
     mapping(address => uint256) public creatorEthBalances; // 记录每个项目发起人的ETH余额
-
+    mapping(uint256 => address[]) public projectInvestors; // 记录每个项目的投资者
+    modifier onlyInvestor(uint256 _projectId) {
+        require(
+            ethContributions[_projectId][msg.sender] > 0 ||
+                contributions[_projectId][msg.sender] > 0,
+            "Caller is not an investor"
+        );
+        _;
+    }
     event ProjectCreated(
         uint256 indexed projectId,
         address indexed creator,
@@ -65,6 +73,7 @@ contract FrogFund is Ownable {
         token = IERC20(_tokenAddress);
         transferOwnership(msg.sender);
     }
+
     function createProject(
         string memory _title,
         string memory _description,
@@ -109,6 +118,11 @@ contract FrogFund is Ownable {
         project.currentAmount += _amount;
         contributions[_projectId][msg.sender] += _amount;
 
+        if (contributions[_projectId][msg.sender] == _amount) {
+            // 新增投资者
+            projectInvestors[_projectId].push(msg.sender);
+        }
+
         emit ProjectFunded(_projectId, msg.sender, _amount, false);
     }
 
@@ -122,6 +136,15 @@ contract FrogFund is Ownable {
 
         project.currentAmount += msg.value;
         ethContributions[_projectId][msg.sender] += msg.value;
+
+        if (ethContributions[_projectId][msg.sender] == msg.value) {
+            // 新增投资者
+            projectInvestors[_projectId].push(msg.sender);
+        }
+        if (project.currentAmount >= project.goalAmount) {
+            // 达到目标金额
+            project.completed = true;
+        }
 
         emit ProjectFunded(_projectId, msg.sender, msg.value, true);
     }
@@ -149,50 +172,65 @@ contract FrogFund is Ownable {
         );
 
         project.currentProgress = _progress;
-        progressDetails[_projectId] = _details;
+        progressDetails[_projectId][_progress] = _details;
 
         emit ProgressUpdated(_projectId, _progress, _details);
     }
 
     function reviewProgress(
         uint256 _projectId,
+        uint256 _progress,
         string calldata _comment,
         bool _approved
-    ) external onlyOwner {
+    ) external onlyInvestor(_projectId) {
         Project storage project = projects[_projectId];
-        require(project.currentProgress > 0, "No progress to review");
+        require(
+            project.currentProgress == _progress,
+            "Progress does not match current project progress"
+        );
+        require(
+            project.currentAmount >= project.goalAmount,
+            "Project has not reached goal amount"
+        );
 
-        approvalComments[_projectId] = _comment;
+        approvalComments[_projectId][_progress] = _comment;
 
         if (_approved) {
             uint256 amountToDistribute = (project.goalAmount *
                 project.currentProgress) / 100;
             if (amountToDistribute > 0) {
-                require(
-                    token.transfer(project.creator, amountToDistribute),
-                    "Token transfer failed"
-                );
-                creatorBalances[project.creator] += amountToDistribute; // 更新发起人ERC20余额
+                // require(
+                //     token.transfer(project.creator, amountToDistribute),
+                //     "Token transfer failed"
+                // );
+                creatorEthBalances[project.creator] += amountToDistribute; // 更新发起人ETH余额
+
                 emit FundsDistributed(_projectId, amountToDistribute, false);
 
                 // 分配奖励给投资人和项目发起人
-                uint256 reward = 1; // 设置奖励数额，您可以根据实际情况调整
-                for (uint256 i = 0; i < projectCount; i++) {
-                    address investor = projects[i].creator;
+                uint256 reward = 1 * 10 ** 18; // 设置奖励数额，您可以根据实际情况调整
+                token.approve(address(this), reward);
+                address[] memory investors = projectInvestors[_projectId];
+                for (uint256 i = 0; i < investors.length; i++) {
+                    address investor = investors[i];
                     if (contributions[_projectId][investor] > 0) {
                         require(
-                            token.transferFrom(owner(), investor, reward),
+                            token.transfer(investor, reward),
                             "Investor reward transfer failed"
                         );
+                        
                     }
                 }
                 require(
-                    token.transferFrom(owner(), project.creator, reward),
+                    token.transfer(project.creator, reward),
                     "Creator reward transfer failed"
                 );
+                creatorBalances[project.creator] += reward; // 更新发起人ERC20余额
             }
         } else {
-            project.currentProgress = 0;
+            project.currentProgress = _progress == 30
+                ? 0
+                : project.currentProgress - 20;
         }
 
         emit ProgressReviewed(_projectId, _comment, _approved);
@@ -214,13 +252,15 @@ contract FrogFund is Ownable {
                 ];
                 if (ethToDistribute > 0) {
                     ethContributions[_projectId][msg.sender] = 0;
-                    (bool success, ) = project.creator.call{value: ethToDistribute}("");
-                     require(success, "Transfer failed");
+                    (bool success, ) = project.creator.call{
+                        value: ethToDistribute
+                    }("");
+                    require(success, "Transfer failed");
                     creatorEthBalances[project.creator] += ethToDistribute; // 更新发起人ETH余额
                     emit FundsDistributed(_projectId, ethToDistribute, true);
                 }
             }
-        } 
+        }
 
         project.completed = true;
     }
@@ -283,5 +323,8 @@ contract FrogFund is Ownable {
         address _creator
     ) external view returns (uint256) {
         return creatorEthBalances[_creator];
+    }
+    function transferTokens(address to, uint256 value) external returns (bool) {
+        return token.transfer(to, value);
     }
 }
