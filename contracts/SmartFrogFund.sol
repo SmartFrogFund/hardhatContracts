@@ -113,7 +113,6 @@ contract FrogFund is Ownable {
     }
 
     function supportProjectWithEth(uint256 _projectId) external payable {
-        // 直接 通过 value 指定ETH数额
         Project storage project = projects[_projectId];
         require(
             block.timestamp < project.deadline,
@@ -175,6 +174,22 @@ contract FrogFund is Ownable {
                 );
                 creatorBalances[project.creator] += amountToDistribute; // 更新发起人ERC20余额
                 emit FundsDistributed(_projectId, amountToDistribute, false);
+
+                // 分配奖励给投资人和项目发起人
+                uint256 reward = 1; // 设置奖励数额，您可以根据实际情况调整
+                for (uint256 i = 0; i < projectCount; i++) {
+                    address investor = projects[i].creator;
+                    if (contributions[_projectId][investor] > 0) {
+                        require(
+                            token.transferFrom(owner(), investor, reward),
+                            "Investor reward transfer failed"
+                        );
+                    }
+                }
+                require(
+                    token.transferFrom(owner(), project.creator, reward),
+                    "Creator reward transfer failed"
+                );
             }
         } else {
             project.currentProgress = 0;
@@ -192,56 +207,20 @@ contract FrogFund is Ownable {
         require(!project.completed, "Funds already distributed");
 
         if (project.currentAmount >= project.goalAmount) {
-            if (project.currentAmount > 0) {
-                uint256 ethBalance = address(this).balance;
-                uint256 tokenBalance = token.balanceOf(address(this));
-                if (ethBalance > 0) {
-                    project.creator.transfer(ethBalance);
-                    creatorEthBalances[project.creator] += ethBalance; // 更新发起人ETH余额
-                    emit FundsDistributed(_projectId, ethBalance, true);
-                }
-                if (tokenBalance > 0) {
-                    require(
-                        token.transfer(project.creator, tokenBalance),
-                        "Token transfer failed"
-                    );
-                    creatorBalances[project.creator] += tokenBalance; // 更新发起人ERC20余额
-                    emit FundsDistributed(_projectId, tokenBalance, false);
-                }
-            }
-        } else {
-            for (uint256 i = 0; i < projectCount; i++) {
-                uint256 tokenContribution = contributions[_projectId][
+            uint256 ethBalance = address(this).balance;
+            if (ethBalance > 0) {
+                uint256 ethToDistribute = ethContributions[_projectId][
                     msg.sender
                 ];
-                uint256 ethContribution = ethContributions[_projectId][
-                    msg.sender
-                ];
-                if (tokenContribution > 0) {
-                    contributions[_projectId][msg.sender] = 0;
-                    require(
-                        token.transfer(msg.sender, tokenContribution),
-                        "Refund transfer failed"
-                    );
-                    emit RefundIssued(
-                        _projectId,
-                        msg.sender,
-                        tokenContribution,
-                        false
-                    );
-                }
-                if (ethContribution > 0) {
+                if (ethToDistribute > 0) {
                     ethContributions[_projectId][msg.sender] = 0;
-                    payable(msg.sender).transfer(ethContribution);
-                    emit RefundIssued(
-                        _projectId,
-                        msg.sender,
-                        ethContribution,
-                        true
-                    );
+                    (bool success, ) = project.creator.call{value: ethToDistribute}("");
+                     require(success, "Transfer failed");
+                    creatorEthBalances[project.creator] += ethToDistribute; // 更新发起人ETH余额
+                    emit FundsDistributed(_projectId, ethToDistribute, true);
                 }
             }
-        }
+        } 
 
         project.completed = true;
     }
