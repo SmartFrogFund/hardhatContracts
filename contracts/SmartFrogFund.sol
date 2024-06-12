@@ -16,11 +16,11 @@ contract FrogFund is Ownable {
 
     IERC20 public token;
     uint256 public projectCount = 0;
-    // 存储项目进度详情和审核意见
     mapping(uint256 => Project) public projects;
     mapping(uint256 => mapping(address => uint256)) public contributions;
     mapping(uint256 => string) public progressDetails;
     mapping(uint256 => string) public approvalComments;
+    mapping(address => uint256) public creatorBalances; // 记录每个项目发起人的余额
 
     event ProjectCreated(
         uint256 indexed projectId,
@@ -52,8 +52,9 @@ contract FrogFund is Ownable {
 
     constructor(address _tokenAddress) Ownable(msg.sender) {
         token = IERC20(_tokenAddress);
-        transferOwnership(msg.sender); 
+        transferOwnership(msg.sender);
     }
+
     function createProject(uint256 _goalAmount, uint256 _deadline) external {
         require(_goalAmount > 0, "Goal amount must be greater than 0");
         require(_deadline > block.timestamp, "Deadline must be in the future");
@@ -72,7 +73,6 @@ contract FrogFund is Ownable {
     }
 
     function supportProject(uint256 _projectId, uint256 _amount) external {
-        // 这里要注意 投资人赞助时 需要前端给token进行授权
         Project storage project = projects[_projectId];
         require(
             block.timestamp < project.deadline,
@@ -135,6 +135,7 @@ contract FrogFund is Ownable {
                 token.transfer(project.creator, amountToDistribute),
                 "Token transfer failed"
             );
+            creatorBalances[project.creator] += amountToDistribute; // 更新发起人余额
             emit FundsDistributed(_projectId, amountToDistribute);
         } else {
             project.currentProgress = 0;
@@ -156,6 +157,7 @@ contract FrogFund is Ownable {
                 token.transfer(project.creator, project.currentAmount),
                 "Token transfer failed"
             );
+            creatorBalances[project.creator] += project.currentAmount; // 更新发起人余额
             emit FundsDistributed(_projectId, project.currentAmount);
         } else {
             for (uint256 i = 0; i < projectCount; i++) {
@@ -210,5 +212,17 @@ contract FrogFund is Ownable {
             project.completed,
             project.currentProgress
         );
+    }
+
+    function getPlatformBalance(address _user) external view returns (uint256) {
+        uint256 totalBalance = 0;
+        for (uint256 i = 0; i < projectCount; i++) {
+            totalBalance += contributions[i][_user];
+        }
+        return totalBalance;
+    }
+
+    function getCreatorBalance(address _creator) external view returns (uint256) {
+        return creatorBalances[_creator];
     }
 }
