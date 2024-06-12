@@ -7,6 +7,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract FrogFund is Ownable {
     struct Project {
         address payable creator; // 项目发起人
+        string title; // 项目标题
+        string description; // 项目描述
+        string link; // 项目链接
         uint256 goalAmount; // 目标筹集金额
         uint256 currentAmount; // 当前筹集金额
         uint256 deadline; // 截止日期
@@ -18,9 +21,11 @@ contract FrogFund is Ownable {
     uint256 public projectCount = 0;
     mapping(uint256 => Project) public projects;
     mapping(uint256 => mapping(address => uint256)) public contributions;
+    mapping(uint256 => mapping(address => uint256)) public ethContributions;
     mapping(uint256 => string) public progressDetails;
     mapping(uint256 => string) public approvalComments;
-    mapping(address => uint256) public creatorBalances; // 记录每个项目发起人的余额
+    mapping(address => uint256) public creatorBalances; // 记录每个项目发起人的ERC20余额
+    mapping(address => uint256) public creatorEthBalances; // 记录每个项目发起人的ETH余额
 
     event ProjectCreated(
         uint256 indexed projectId,
@@ -31,18 +36,24 @@ contract FrogFund is Ownable {
     event ProjectFunded(
         uint256 indexed projectId,
         address indexed supporter,
-        uint256 amount
+        uint256 amount,
+        bool isEth
     );
     event ProgressUpdated(
         uint256 indexed projectId,
         uint256 progress,
         string details
     );
-    event FundsDistributed(uint256 indexed projectId, uint256 amount);
+    event FundsDistributed(
+        uint256 indexed projectId,
+        uint256 amount,
+        bool isEth
+    );
     event RefundIssued(
         uint256 indexed projectId,
         address indexed supporter,
-        uint256 amount
+        uint256 amount,
+        bool isEth
     );
     event ProgressReviewed(
         uint256 indexed projectId,
@@ -54,13 +65,21 @@ contract FrogFund is Ownable {
         token = IERC20(_tokenAddress);
         transferOwnership(msg.sender);
     }
-
-    function createProject(uint256 _goalAmount, uint256 _deadline) external {
+    function createProject(
+        string memory _title,
+        string memory _description,
+        string memory _link,
+        uint256 _goalAmount,
+        uint256 _deadline
+    ) external {
         require(_goalAmount > 0, "Goal amount must be greater than 0");
         require(_deadline > block.timestamp, "Deadline must be in the future");
 
         projects[projectCount] = Project({
             creator: payable(msg.sender),
+            title: _title,
+            description: _description,
+            link: _link,
             goalAmount: _goalAmount,
             currentAmount: 0,
             deadline: _deadline,
@@ -72,7 +91,10 @@ contract FrogFund is Ownable {
         projectCount++;
     }
 
-    function supportProject(uint256 _projectId, uint256 _amount) external {
+    function supportProjectWithToken(
+        uint256 _projectId,
+        uint256 _amount
+    ) external {
         Project storage project = projects[_projectId];
         require(
             block.timestamp < project.deadline,
@@ -87,7 +109,22 @@ contract FrogFund is Ownable {
         project.currentAmount += _amount;
         contributions[_projectId][msg.sender] += _amount;
 
-        emit ProjectFunded(_projectId, msg.sender, _amount);
+        emit ProjectFunded(_projectId, msg.sender, _amount, false);
+    }
+
+    function supportProjectWithEth(uint256 _projectId) external payable {
+        // 直接 通过 value 指定ETH数额
+        Project storage project = projects[_projectId];
+        require(
+            block.timestamp < project.deadline,
+            "Project funding period is over"
+        );
+        require(msg.value > 0, "Amount must be greater than 0");
+
+        project.currentAmount += msg.value;
+        ethContributions[_projectId][msg.sender] += msg.value;
+
+        emit ProjectFunded(_projectId, msg.sender, msg.value, true);
     }
 
     function updateProgress(
@@ -131,12 +168,14 @@ contract FrogFund is Ownable {
         if (_approved) {
             uint256 amountToDistribute = (project.goalAmount *
                 project.currentProgress) / 100;
-            require(
-                token.transfer(project.creator, amountToDistribute),
-                "Token transfer failed"
-            );
-            creatorBalances[project.creator] += amountToDistribute; // 更新发起人余额
-            emit FundsDistributed(_projectId, amountToDistribute);
+            if (amountToDistribute > 0) {
+                require(
+                    token.transfer(project.creator, amountToDistribute),
+                    "Token transfer failed"
+                );
+                creatorBalances[project.creator] += amountToDistribute; // 更新发起人ERC20余额
+                emit FundsDistributed(_projectId, amountToDistribute, false);
+            }
         } else {
             project.currentProgress = 0;
         }
@@ -153,22 +192,53 @@ contract FrogFund is Ownable {
         require(!project.completed, "Funds already distributed");
 
         if (project.currentAmount >= project.goalAmount) {
-            require(
-                token.transfer(project.creator, project.currentAmount),
-                "Token transfer failed"
-            );
-            creatorBalances[project.creator] += project.currentAmount; // 更新发起人余额
-            emit FundsDistributed(_projectId, project.currentAmount);
+            if (project.currentAmount > 0) {
+                uint256 ethBalance = address(this).balance;
+                uint256 tokenBalance = token.balanceOf(address(this));
+                if (ethBalance > 0) {
+                    project.creator.transfer(ethBalance);
+                    creatorEthBalances[project.creator] += ethBalance; // 更新发起人ETH余额
+                    emit FundsDistributed(_projectId, ethBalance, true);
+                }
+                if (tokenBalance > 0) {
+                    require(
+                        token.transfer(project.creator, tokenBalance),
+                        "Token transfer failed"
+                    );
+                    creatorBalances[project.creator] += tokenBalance; // 更新发起人ERC20余额
+                    emit FundsDistributed(_projectId, tokenBalance, false);
+                }
+            }
         } else {
             for (uint256 i = 0; i < projectCount; i++) {
-                uint256 contribution = contributions[_projectId][msg.sender];
-                if (contribution > 0) {
+                uint256 tokenContribution = contributions[_projectId][
+                    msg.sender
+                ];
+                uint256 ethContribution = ethContributions[_projectId][
+                    msg.sender
+                ];
+                if (tokenContribution > 0) {
                     contributions[_projectId][msg.sender] = 0;
                     require(
-                        token.transfer(msg.sender, contribution),
+                        token.transfer(msg.sender, tokenContribution),
                         "Refund transfer failed"
                     );
-                    emit RefundIssued(_projectId, msg.sender, contribution);
+                    emit RefundIssued(
+                        _projectId,
+                        msg.sender,
+                        tokenContribution,
+                        false
+                    );
+                }
+                if (ethContribution > 0) {
+                    ethContributions[_projectId][msg.sender] = 0;
+                    payable(msg.sender).transfer(ethContribution);
+                    emit RefundIssued(
+                        _projectId,
+                        msg.sender,
+                        ethContribution,
+                        true
+                    );
                 }
             }
         }
@@ -215,14 +285,24 @@ contract FrogFund is Ownable {
     }
 
     function getPlatformBalance(address _user) external view returns (uint256) {
-        uint256 totalBalance = 0;
+        uint256 totalTokenBalance = 0;
+        uint256 totalEthBalance = 0;
         for (uint256 i = 0; i < projectCount; i++) {
-            totalBalance += contributions[i][_user];
+            totalTokenBalance += contributions[i][_user];
+            totalEthBalance += ethContributions[i][_user];
         }
-        return totalBalance;
+        return totalTokenBalance + totalEthBalance;
     }
 
-    function getCreatorBalance(address _creator) external view returns (uint256) {
+    function getCreatorBalance(
+        address _creator
+    ) external view returns (uint256) {
         return creatorBalances[_creator];
+    }
+
+    function getCreatorEthBalance(
+        address _creator
+    ) external view returns (uint256) {
+        return creatorEthBalances[_creator];
     }
 }
