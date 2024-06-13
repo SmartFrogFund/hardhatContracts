@@ -239,7 +239,7 @@ contract FrogFund is Ownable {
         Project storage project
     ) internal {
         uint256 reward = 1 * 10 ** 18; // 设置奖励数额，您可以根据实际情况调整
-        token.approve(address(this), reward);
+        // token.approve(address(this), reward);
         address[] memory investors = projectInvestors[_projectId];
         for (uint256 i = 0; i < investors.length; i++) {
             address investor = investors[i];

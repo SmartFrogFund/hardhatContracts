@@ -225,6 +225,13 @@ describe( "FrogFund", function () {
 
         const creatorBalanceEth = await frogFund.getCreatorEthBalance(addr1.address);
         const goalAmount = ethers.parseUnits("500", 18);
+        console.log('当前进度:', progress);
+           const creatorBalance = await frogFund.getCreatorBalance(addr1.address);
+        const erc = await token.balanceOf(addr1.address);
+        const addr1Eth = await ethers.provider.getBalance(addr1.address);
+        const addr2Eth = await ethers.provider.getBalance(addr2.address);
+        // console.log('审批后addr1内的合约金额:', ethers.formatUnits(creatorBalance, 18), '审批后addr1内的代币金额:',ethers.formatUnits(erc, 18));
+        console.log('审批后addr1内的ETH金额:',  ethers.formatUnits(addr1Eth, 18),'审批后addr2内的ETH金额:', ethers.formatUnits(addr2Eth, 18));
         expect(Number(ethers.formatUnits(creatorBalanceEth, 18))).to.equal(
             (Number(ethers.formatUnits(goalAmount, 18)) * progress) / 100
         );
@@ -239,30 +246,14 @@ describe( "FrogFund", function () {
         await supportProject();
     });
 
-    afterEach(async () => {
-        const creatorBalance = await frogFund.getCreatorBalance(addr1.address);
-        const erc = await token.balanceOf(addr1.address);
-        const addr1Eth = await ethers.provider.getBalance(addr1.address);
-        const addr2Eth = await ethers.provider.getBalance(addr2.address);
-        // console.log('审批后addr1内的合约金额:', ethers.formatUnits(creatorBalance, 18), '审批后addr1内的代币金额:',ethers.formatUnits(erc, 18));
-        console.log('审批后addr1内的ETH金额:',  ethers.formatUnits(addr1Eth, 18),'审批后addr2内的ETH金额:', ethers.formatUnits(addr2Eth, 18));
-    });
-
-    it("30% Should allow owner to approve project progress", async function () {
+    it("30% - 100% Should allow owner to approve project progress", async function () {
         await approveProgress(30, "Project is 30% completed", "Looks good");
-    });
-
-    it("50% Should allow owner to approve project progress", async function () {
+        
         await approveProgress(50, "Project is 50% completed", "Looks good");
-    });
-
-    it("70% Should allow owner to approve project progress", async function () {
         await approveProgress(70, "Project is 70% completed", "Looks good");
-    });
-
-    it("100% Should allow owner to approve project progress", async function () {
         await approveProgress(100, "Project is 100% completed", "Looks good");
     });
+
 });
 
 
