@@ -119,4 +119,4 @@ const config: HardhatUserConfig = {
 	},
 };
 console.log('！！！是否链上部署！！！', process.env.IS_PROD);
-export default process.env.IS_PROD ? config : devConfig;
+export default process.env.IS_PROD === 'true' ? devConfig : config;
