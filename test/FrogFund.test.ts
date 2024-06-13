@@ -230,8 +230,11 @@ describe( "FrogFund", function () {
         const erc = await token.balanceOf(addr1.address);
         const addr1Eth = await ethers.provider.getBalance(addr1.address);
         const addr2Eth = await ethers.provider.getBalance(addr2.address);
+        const addr1Token = await token.balanceOf(addr1.address);
+        const addr2Token = await token.balanceOf(addr2.address);
         // console.log('审批后addr1内的合约金额:', ethers.formatUnits(creatorBalance, 18), '审批后addr1内的代币金额:',ethers.formatUnits(erc, 18));
         console.log('审批后addr1内的ETH金额:',  ethers.formatUnits(addr1Eth, 18),'审批后addr2内的ETH金额:', ethers.formatUnits(addr2Eth, 18));
+        console.log('审批后addr1内的Toekn金额:',  ethers.formatUnits(addr1Token, 18),'审批后addr2内的Token金额:', ethers.formatUnits(addr2Token, 18));
         expect(Number(ethers.formatUnits(creatorBalanceEth, 18))).to.equal(
             (Number(ethers.formatUnits(goalAmount, 18)) * progress) / 100
         );

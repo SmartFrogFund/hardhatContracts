@@ -238,12 +238,12 @@ contract FrogFund is Ownable {
         uint256 _projectId,
         Project storage project
     ) internal {
-        uint256 reward = 1 * 10 ** 18; // 设置奖励数额，您可以根据实际情况调整
+        uint256 reward = 1 * 10 ** 18; // 设置奖励数额
         // token.approve(address(this), reward);
         address[] memory investors = projectInvestors[_projectId];
         for (uint256 i = 0; i < investors.length; i++) {
             address investor = investors[i];
-            if (contributions[_projectId][investor] > 0) {
+            if (ethContributions[_projectId][investor] > 0) {
                 require(
                     token.transfer(investor, reward),
                     "Investor reward transfer failed"
