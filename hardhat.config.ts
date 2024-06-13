@@ -118,5 +118,5 @@ const config: HardhatUserConfig = {
 		timeout: 500000,
 	},
 };
-
+console.log('！！！是否链上部署！！！', process.env.IS_PROD);
 export default process.env.IS_PROD ? config : devConfig;
