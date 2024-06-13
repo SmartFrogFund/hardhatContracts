@@ -33,6 +33,7 @@ describe( "FrogFund", function () {
 
         // 授权 FrogFund 合约可以从 owner 账户中转移足够的代币
         await token.approve( frogFund.target, ethers.parseUnits( "100000", 18 ) );
+
         // console.log('@@@初次加载@@@', await token.balanceOf(frogFund.target));
     } );
 
@@ -193,180 +194,77 @@ describe( "FrogFund", function () {
     } );
 
     // 审批进度
-    describe( "reviewProgress", function () {
-        beforeEach( async () => {
-            time.advanceBlock();
-            const title = "Project Title";
-            const description = "Project Description";
-            const link = "http://project-link.com";
-            const goalAmount = ethers.parseUnits( "500", 18 );
-            const deadline = ( await time.latest() )
-                .add( time.duration.days( 7 ) )
-                .toNumber();
-            await frogFund
-                .connect( addr1 )
-                .createProject( title, description, link, goalAmount, deadline );
-            console.log(deadline,'时间@@@@@@@@@@@');
-            
-            // 使用 ETH 支持项目，使其达到目标金额
-            const projectId = 0;
-            const supportAmount = ethers.parseUnits( "500", 18 );
-            await expect(
-                frogFund
-                    .connect( addr2 )
-                    .supportProjectWithEth( projectId, { value: supportAmount } )
-            )
-                .to.emit( frogFund, "ProjectFunded" )
-                .withArgs( projectId, addr2.address, supportAmount, true );
-        } );
-        after( async () => {
-            // const creatorBalance = await frogFund.getCreatorBalance( addr1.address );
-            // const inBalance = await frogFund.getCreatorBalance( addr2.address );
-            // const inBalanceEth = await frogFund.getCreatorEthBalance( addr2.address );
-            // const creatorBalanceEth = await frogFund.getCreatorEthBalance( addr1.address );
-            // const frogFundErc20 = await token.balanceOf( frogFund.target )
-            // const detail = await frogFund.getProjectDetails( 0 );
+    describe("reviewProgress", function () {
+    async function createProject() {
+        time.advanceBlock();
+        const title = "Project Title";
+        const description = "Project Description";
+        const link = "http://project-link.com";
+        const goalAmount = ethers.parseUnits("500", 18);
+        const deadline = (await time.latest()).add(time.duration.days(10)).toNumber();
+        await frogFund.connect(addr1).createProject(title, description, link, goalAmount, deadline);
+    }
 
-            // console.log( '@@@合约代币余额:@@@', ethers.formatUnits( frogFundErc20 ));
-            // console.log('投资人代币:',ethers.formatUnits(inBalance));
-            // console.log('投资人eth:',ethers.formatUnits(inBalanceEth));
-            // console.log('项目人代币:',ethers.formatUnits(creatorBalance));
-            // console.log('项目人eth:',ethers.formatUnits(creatorBalanceEth));
-        //    const res = await frogFund.transferTokens( addr1.address,ethers.parseUnits( "1", 18 ))
-           const creatorBalance = await frogFund.getCreatorBalance( addr1.address );
-           const erc = await token.balanceOf( addr1.address );
-            console.log('@@@',ethers.formatUnits(creatorBalance,18),ethers.formatUnits(erc,18),erc,creatorBalance)
+    async function supportProject() {
+        const projectId = 0;
+        const supportAmount = ethers.parseUnits("500", 18);
+        await expect(frogFund.connect(addr2).supportProjectWithEth(projectId, { value: supportAmount }))
+            .to.emit(frogFund, "ProjectFunded")
+            .withArgs(projectId, addr2.address, supportAmount, true);
+    }
 
-        } )
-        it( "30% Should allow owner to approve project progress ", async function () {
-            const goalAmount = ethers.parseUnits( "500", 18 );
-            const progress = 30;
-            const details = "Project is 30% completed";
-            await frogFund.connect( addr1 ).updateProgress( 0, progress, details );
-            const comment = "Looks good";
-            const approved = true;
+    async function approveProgress(progress, details, comment) {
+        await frogFund.connect(addr1).updateProgress(0, progress, details);
+        const approved = true;
 
-            // 向合约转移足够的代币，以便进行分配
-            const transferAmount = ethers.parseUnits( "1234", 18 ); // 根据需要调整数量
-            await token.transfer( frogFund.target, transferAmount );
-            const res2 = await token.balanceOf( frogFund.target );
-            await frogFund
-                .connect( addr2 )
-                .reviewProgress( 0, progress, comment, approved );
+        const transferAmount = ethers.parseUnits("1234", 18); // 根据需要调整数量
+        await token.transfer(frogFund.target, transferAmount);
+        await frogFund.connect(addr2).reviewProgress(0, progress, comment, approved);
 
-            expect( await frogFund.approvalComments( 0, progress ) ).to.equal( comment );
+        expect(await frogFund.approvalComments(0, progress)).to.equal(comment);
 
-            // 检查是否分配资金给项目发起人
-            const creatorBalance = await frogFund.getCreatorBalance( addr1.address );
-            const creatorBalanceEth = await frogFund.getCreatorEthBalance(
-                addr1.address
-            );
-            const detail = await frogFund.getProjectDetails( 0 );
+        const creatorBalanceEth = await frogFund.getCreatorEthBalance(addr1.address);
+        const goalAmount = ethers.parseUnits("500", 18);
+        expect(Number(ethers.formatUnits(creatorBalanceEth, 18))).to.equal(
+            (Number(ethers.formatUnits(goalAmount, 18)) * progress) / 100
+        );
+    }
 
-            // 项目人员应该收到项目金额的30%
-            expect( Number( ethers.formatUnits( creatorBalanceEth, 18 ) ) ).to.equal(
-                ( ethers.formatUnits( goalAmount, 18 ) * progress ) / 100
-            );
-        } );
-        it( "50% Should allow owner to approve project progress ", async function () {
-            const goalAmount = ethers.parseUnits( "500", 18 );
-            const progress = 50;
-            const details = "Project is 30% completed";
-            await frogFund.connect( addr1 ).updateProgress( 0, progress, details );
-            const comment = "Looks good";
-            const approved = true;
+    before(async () => {
+    
+    });
 
-            // 向合约转移足够的代币，以便进行分配
-            const transferAmount = ethers.parseUnits( "1234", 18 ); // 根据需要调整数量
-            await token.transfer( frogFund.target, transferAmount );
-            const res2 = await token.balanceOf( frogFund.target );
-            await frogFund
-                .connect( addr2 )
-                .reviewProgress( 0, progress, comment, approved );
+    beforeEach(async () => {
+        await createProject();
+        await supportProject();
+    });
 
-            expect( await frogFund.approvalComments( 0, progress ) ).to.equal( comment );
+    afterEach(async () => {
+        const creatorBalance = await frogFund.getCreatorBalance(addr1.address);
+        const erc = await token.balanceOf(addr1.address);
+        const addr1Eth = await ethers.provider.getBalance(addr1.address);
+        const addr2Eth = await ethers.provider.getBalance(addr2.address);
+        console.log('@@@1', ethers.formatUnits(creatorBalance, 18), ethers.formatUnits(erc, 18), erc, creatorBalance);
+        console.log('@@@2', ethers.formatUnits(addr1Eth, 18), ethers.formatUnits(addr2Eth, 18));
+    });
 
-            // 检查是否分配资金给项目发起人
-            const creatorBalance = await frogFund.getCreatorBalance( addr1.address );
-            const creatorBalanceEth = await frogFund.getCreatorEthBalance(
-                addr1.address
-            );
-            const detail = await frogFund.getProjectDetails( 0 );
+    it("30% Should allow owner to approve project progress", async function () {
+        await approveProgress(30, "Project is 30% completed", "Looks good");
+    });
 
-            // 项目人员应该收到项目金额的30%
-            expect( Number( ethers.formatUnits( creatorBalanceEth, 18 ) ) ).to.equal(
-                ( ethers.formatUnits( goalAmount, 18 ) * progress ) / 100
-            );
-        } );
-        it( "70% Should allow owner to approve project progress ", async function () {
-            const goalAmount = ethers.parseUnits( "500", 18 );
-            const progress = 70;
-            const details = "Project is 30% completed";
-            await frogFund.connect( addr1 ).updateProgress( 0, progress, details );
-            const comment = "Looks good";
-            const approved = true;
+    it("50% Should allow owner to approve project progress", async function () {
+        await approveProgress(50, "Project is 50% completed", "Looks good");
+    });
 
-            // 向合约转移足够的代币，以便进行分配
-            const transferAmount = ethers.parseUnits( "1234", 18 ); // 根据需要调整数量
-            await token.transfer( frogFund.target, transferAmount );
-            const res2 = await token.balanceOf( frogFund.target );
-            await frogFund
-                .connect( addr2 )
-                .reviewProgress( 0, progress, comment, approved );
+    it("70% Should allow owner to approve project progress", async function () {
+        await approveProgress(70, "Project is 70% completed", "Looks good");
+    });
 
-            expect( await frogFund.approvalComments( 0, progress ) ).to.equal( comment );
+    it("100% Should allow owner to approve project progress", async function () {
+        await approveProgress(100, "Project is 100% completed", "Looks good");
+    });
+});
 
-            // 检查是否分配资金给项目发起人
-            const creatorBalance = await frogFund.getCreatorBalance( addr1.address );
-            const creatorBalanceEth = await frogFund.getCreatorEthBalance(
-                addr1.address
-            );
-            const inBalance = await frogFund.getCreatorBalance( addr2.address );
-            const inBalanceEth = await frogFund.getCreatorEthBalance( addr2.address );
-            const frogFundErc20 = await token.balanceOf( frogFund.target )
 
-            console.log( '@@@合约代币余额:@@@', ethers.formatUnits( frogFundErc20 ));
-            console.log('投资人代币:',ethers.formatUnits(inBalance));
-            console.log('投资人eth:',ethers.formatUnits(inBalanceEth));
-            console.log('项目人代币:',ethers.formatUnits(creatorBalance));
-            console.log('项目人eth:',ethers.formatUnits(creatorBalanceEth));
-            const detail = await frogFund.getProjectDetails( 0 );
 
-            // 项目人员应该收到项目金额的30%
-            expect( Number( ethers.formatUnits( creatorBalanceEth, 18 ) ) ).to.equal(
-                ( ethers.formatUnits( goalAmount, 18 ) * progress ) / 100
-            );
-            
-        } );
-        it( "100% Should allow owner to approve project progress ", async function () {
-            const goalAmount = ethers.parseUnits( "500", 18 );
-            const progress = 100;
-            const details = "Project is 30% completed";
-            await frogFund.connect( addr1 ).updateProgress( 0, progress, details );
-            const comment = "Looks good";
-            const approved = true;
-
-            // 向合约转移足够的代币，以便进行分配
-            const transferAmount = ethers.parseUnits( "1234", 18 ); // 根据需要调整数量
-            await token.transfer( frogFund.target, transferAmount );
-            const res2 = await token.balanceOf( frogFund.target );
-            await frogFund
-                .connect( addr2 )
-                .reviewProgress( 0, progress, comment, approved );
-
-            expect( await frogFund.approvalComments( 0, progress ) ).to.equal( comment );
-
-            // 检查是否分配资金给项目发起人
-            const creatorBalance = await frogFund.getCreatorBalance( addr1.address );
-            const creatorBalanceEth = await frogFund.getCreatorEthBalance(
-                addr1.address
-            );
-            const detail = await frogFund.getProjectDetails( 0 );
-
-            // 项目人员应该收到项目金额的100%
-            expect( Number( ethers.formatUnits( creatorBalanceEth, 18 ) ) ).to.equal(
-                ( ethers.formatUnits( goalAmount, 18 ) * progress ) / 100
-            );
-        } );
-    } );
 } );
