@@ -119,4 +119,4 @@ const config: HardhatUserConfig = {
 	},
 };
 
-export default process.env.IS_DEVELOPE ? devConfig : config;
+export default process.env.IS_PROD ? config : devConfig;
