@@ -244,8 +244,8 @@ describe( "FrogFund", function () {
         const erc = await token.balanceOf(addr1.address);
         const addr1Eth = await ethers.provider.getBalance(addr1.address);
         const addr2Eth = await ethers.provider.getBalance(addr2.address);
-        console.log('@@@1', ethers.formatUnits(creatorBalance, 18), ethers.formatUnits(erc, 18), erc, creatorBalance);
-        console.log('@@@2', ethers.formatUnits(addr1Eth, 18), ethers.formatUnits(addr2Eth, 18));
+        // console.log('审批后addr1内的合约金额:', ethers.formatUnits(creatorBalance, 18), '审批后addr1内的代币金额:',ethers.formatUnits(erc, 18));
+        console.log('审批后addr1内的ETH金额:',  ethers.formatUnits(addr1Eth, 18),'审批后addr2内的ETH金额:', ethers.formatUnits(addr2Eth, 18));
     });
 
     it("30% Should allow owner to approve project progress", async function () {
