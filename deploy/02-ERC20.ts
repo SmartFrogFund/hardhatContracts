@@ -8,9 +8,8 @@ const deployERC20: DeployFunction = async function (
   const { deploy, log } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  log("Deploying ERC20 token...");
 
-//   log(`Deploying ERC20 token...${args}`,args,deployer);
+  log(`Deploying ERC20 deployer:`,deployer);
 
   const erc20 = await deploy("MyToken", {
     from: deployer,
@@ -18,7 +17,7 @@ const deployERC20: DeployFunction = async function (
     log: true,
   });
 
-  log(`ERC20 token deployed at ${erc20.address}`);
+  log(`ERC20 address: ${erc20.address}`);
 };
 
 deployERC20.tags = ["ERC20"];
