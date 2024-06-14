@@ -219,15 +219,14 @@ contract FrogFund is Ownable {
     ) internal {
         uint256 totalAmountToDistribute = (project.goalAmount * _progress) /
             100;
-        uint256 amountToDistribute = totalAmountToDistribute - project.amountDistributed;
+        uint256 amountToDistribute = totalAmountToDistribute -
+            project.amountDistributed;
 
         if (amountToDistribute > 0) {
             project.amountDistributed += amountToDistribute; // 更新已发放金额
             creatorEthBalances[project.creator] += amountToDistribute; // 更新发起人ETH余额
             // 实际转移ETH到项目发起人
-            (bool success, ) = project.creator.call{value: amountToDistribute}(
-                ""
-            );
+            bool success = project.creator.send(amountToDistribute);
             require(success, "ETH transfer failed");
 
             emit FundsDistributed(_projectId, amountToDistribute, false);
@@ -282,7 +281,7 @@ contract FrogFund is Ownable {
     )
         external
         view
-        returns (address, uint256, uint256, uint256, bool, uint256,uint256)
+        returns (address, uint256, uint256, uint256, bool, uint256, uint256)
     {
         Project storage project = projects[_projectId];
         return (
@@ -296,14 +295,16 @@ contract FrogFund is Ownable {
         );
     }
 
-    function getPlatformBalance(address _user) external view returns (uint256) {
+    function getPlatformBalance(
+        address _user
+    ) external view returns (uint256, uint256) {
         uint256 totalTokenBalance = 0;
         uint256 totalEthBalance = 0;
         for (uint256 i = 0; i < projectCount; i++) {
             totalTokenBalance += contributions[i][_user];
             totalEthBalance += ethContributions[i][_user];
         }
-        return totalTokenBalance + totalEthBalance;
+        return (totalTokenBalance, totalEthBalance);
     }
 
     function getCreatorBalance(
