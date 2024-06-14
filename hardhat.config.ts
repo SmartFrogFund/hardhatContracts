@@ -26,6 +26,9 @@ const devConfig: HardhatUserConfig = {
 		hardhat: {
 			chainId: 31337,
 		},
+		hardhatTest: {
+			chainId: 31337,
+		},
 		localhost: {
 			chainId: 31337,
 		},
@@ -119,4 +122,4 @@ const config: HardhatUserConfig = {
 	},
 };
 console.log('！！！是否链上部署！！！', process.env.IS_PROD);
-export default process.env.IS_PROD === 'true' ? config : devConfig;
+export default process.env.development === 'development' ? devConfig : config;
