@@ -26,7 +26,7 @@ const devConfig: HardhatUserConfig = {
 		hardhat: {
 			chainId: 31337,
 		},
-		hardhatTest: {
+		localhost: {
 			chainId: 31337,
 		},
 	},
