@@ -354,4 +354,19 @@ contract FrogFund is Ownable {
     function transferTokens(address to, uint256 value) external returns (bool) {
         return token.transfer(to, value);
     }
+    function canSubmitNextProgress(
+        uint256 _projectId
+    ) external view returns (bool) {
+        Project storage project = projects[_projectId];
+        uint256 totalInvestors = projectInvestors[_projectId].length;
+        uint256 requiredApprovals = getRequiredApprovals(totalInvestors);
+
+        if (project.currentProgress == 0) {
+            return true;
+        }
+
+        return
+            progressApprovals[_projectId][project.currentProgress] >=
+            requiredApprovals;
+    }
 }
