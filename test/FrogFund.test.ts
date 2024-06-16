@@ -294,7 +294,7 @@ describe("FrogFund", function () {
       console.log((await frogFund.projects(0)).currentAmount, "###");
       await frogFund.connect(addr2).reviewProgress(0, 30, "ok done", false);
       await frogFund.connect(addr3).reviewProgress(0, 30, "ok done", false);
-      //   await frogFund.connect(addr4).reviewProgress(0, 30, "ok done", true);
+    //   await frogFund.connect(addr4).reviewProgress(0, 30, "ok done", true);
 
       const project = await frogFund.projects(0);
       console.log(project.amountDistributed);
@@ -312,6 +312,7 @@ describe("FrogFund", function () {
       )
         .to.emit(frogFund, "ProjectFunded")
         .withArgs(projectId, addr2.address, supportAmount, true);
+
       // 3号投资
       await expect(
         frogFund
@@ -335,9 +336,20 @@ describe("FrogFund", function () {
         .updateProgress(0, 30, "Project is 30% completed");
       console.log((await frogFund.projects(0)).currentAmount, "###");
       await frogFund.connect(addr2).reviewProgress(0, 30, "ok done", true);
+      console.log(
+        await frogFund.connect(addr2).canSubmitNextProgress(0),
+        "能否提交"
+      );
       await frogFund.connect(addr3).reviewProgress(0, 30, "ok done", true);
+      console.log(
+        await frogFund.connect(addr2).canSubmitNextProgress(0),
+        "能否提交"
+      );
       await frogFund.connect(addr4).reviewProgress(0, 30, "ok done", true);
-
+      console.log(
+        await frogFund.connect(addr2).canSubmitNextProgress(0),
+        "能否提交"
+      );
       const project = await frogFund.projects(0);
       console.log(project.amountDistributed);
       // 半数通过，发放奖励+资金
