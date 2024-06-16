@@ -28,6 +28,9 @@ contract FrogFund is Ownable {
     mapping(address => uint256) public creatorBalances; // 记录每个项目发起人的ERC20余额
     mapping(address => uint256) public creatorEthBalances; // 记录每个项目发起人的ETH余额
     mapping(uint256 => address[]) public projectInvestors; // 记录每个项目的投资者
+    mapping(uint256 => mapping(uint256 => uint256)) public progressApprovals; // projectId => progress => approval count
+    mapping(uint256 => mapping(uint256 => uint256)) public progressDisapprovals; // projectId => progress => disapproval count
+
     modifier onlyInvestor(uint256 _projectId) {
         require(
             ethContributions[_projectId][msg.sender] > 0 ||
@@ -172,6 +175,15 @@ contract FrogFund is Ownable {
             _progress > project.currentProgress,
             "Progress must be greater than current progress"
         );
+        if (project.currentProgress > 0) {
+            uint256 totalInvestors = projectInvestors[_projectId].length;
+            uint256 requiredApprovals = getRequiredApprovals(totalInvestors);
+            require(
+                progressApprovals[_projectId][project.currentProgress] >=
+                    requiredApprovals,
+                "Current progress has not been approved by the majority of investors"
+            );
+        }
 
         project.currentProgress = _progress;
         progressDetails[_projectId][_progress] = _details;
@@ -197,21 +209,42 @@ contract FrogFund is Ownable {
 
         approvalComments[_projectId][_progress] = _comment;
 
+        uint256 totalInvestors = projectInvestors[_projectId].length;
+        uint256 requiredApprovals = getRequiredApprovals(totalInvestors);
+
         if (_approved) {
-            // 计算并发放资金
-            distributeFunds(_projectId, _progress, project);
-
-            // 分配奖励给投资人和项目发起人
-            distributeRewards(_projectId, project);
+            progressApprovals[_projectId][_progress]++;
+            if (progressApprovals[_projectId][_progress] >= requiredApprovals) {
+                distributeFunds(_projectId, _progress, project);
+                distributeRewards(_projectId, project);
+            }
         } else {
-            project.currentProgress = _progress == 30
-                ? 0
-                : project.currentProgress - 20;
+            progressDisapprovals[_projectId][_progress]++;
+            if (
+                progressDisapprovals[_projectId][_progress] > totalInvestors / 2
+            ) {
+                // 回退进度
+                project.currentProgress = _progress == 30
+                    ? 0
+                    : project.currentProgress - 20;
+                // 清空之前阶段的审批记录
+                clearProgressRecords(_projectId, _progress);
+            }
         }
-
         emit ProgressReviewed(_projectId, _comment, _approved);
     }
-
+    function clearProgressRecords(
+        uint256 _projectId,
+        uint256 _progress
+    ) internal {
+        progressApprovals[_projectId][_progress] = 0;
+        progressDisapprovals[_projectId][_progress] = 0;
+    }
+    function getRequiredApprovals(
+        uint256 totalInvestors
+    ) internal pure returns (uint256) {
+        return (totalInvestors + 1) / 2; // 确保至少达到总投资人数的一半
+    }
     function distributeFunds(
         uint256 _projectId,
         uint256 _progress,
