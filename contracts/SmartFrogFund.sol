@@ -43,6 +43,8 @@ contract FrogFund is Ownable {
     event ProjectCreated(
         uint256 indexed projectId,
         address indexed creator,
+        string _description,
+        string _link,
         uint256 goalAmount,
         uint256 deadline
     );
