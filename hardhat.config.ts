@@ -8,6 +8,8 @@ import 'hardhat-deploy-ethers';
 import '@nomicfoundation/hardhat-chai-matchers';
 import '@nomicfoundation/hardhat-verify';
 import '@nomiclabs/hardhat-web3';
+import "@openzeppelin/hardhat-upgrades";
+
 // import "@nomiclabs/hardhat-etherscan";
 
 // 测试环境不需要这些api
