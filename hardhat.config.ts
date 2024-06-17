@@ -75,6 +75,8 @@ const config: HardhatUserConfig = {
 			url: `https://linea-sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
 			accounts: [`0x${process.env.SEPOLIA_PRIVATE_KEY}`], // 你的私钥，需要将其保存到环境变量中
 			timeout: 200000, // 增加超时时间为200秒
+            gasPrice:118770660,
+            minGasPrice:0,
 		},
 	},
 	etherscan: {

@@ -294,6 +294,7 @@ describe("FrogFund", function () {
       console.log((await frogFund.projects(0)).currentAmount, "###");
       await frogFund.connect(addr2).reviewProgress(0, 30, "ok done", false);
       await frogFund.connect(addr3).reviewProgress(0, 30, "ok done", false);
+      
     //   await frogFund.connect(addr4).reviewProgress(0, 30, "ok done", true);
 
       const project = await frogFund.projects(0);
@@ -312,7 +313,8 @@ describe("FrogFund", function () {
       )
         .to.emit(frogFund, "ProjectFunded")
         .withArgs(projectId, addr2.address, supportAmount, true);
-
+        console.log(ethers.formatEther(await frogFund.ethContributions(0,addr2.address)), "2号投资后");
+        
       // 3号投资
       await expect(
         frogFund
@@ -321,7 +323,7 @@ describe("FrogFund", function () {
       )
         .to.emit(frogFund, "ProjectFunded")
         .withArgs(projectId, addr3.address, supportAmount, true);
-
+  console.log(ethers.formatEther(await frogFund.ethContributions(0,addr2.address)), "3号投资后");
       // 4号投资
       await expect(
         frogFund
@@ -330,30 +332,38 @@ describe("FrogFund", function () {
       )
         .to.emit(frogFund, "ProjectFunded")
         .withArgs(projectId, addr4.address, supportAmount, true);
-
+    console.log(ethers.formatEther(await frogFund.ethContributions(0,addr2.address)), "4号投资后");
       await frogFund
         .connect(addr1)
         .updateProgress(0, 30, "Project is 30% completed");
       console.log((await frogFund.projects(0)).currentAmount, "###");
       await frogFund.connect(addr2).reviewProgress(0, 30, "ok done", true);
-      console.log(
-        await frogFund.connect(addr2).canSubmitNextProgress(0),
-        "能否提交"
-      );
       await frogFund.connect(addr3).reviewProgress(0, 30, "ok done", true);
-      console.log(
-        await frogFund.connect(addr2).canSubmitNextProgress(0),
-        "能否提交"
-      );
       await frogFund.connect(addr4).reviewProgress(0, 30, "ok done", true);
       console.log(
-        await frogFund.connect(addr2).canSubmitNextProgress(0),
+        await frogFund.connect(addr1).canSubmitNextProgress(0),
         "能否提交"
       );
+       console.log(ethers.formatEther(await token.balanceOf(addr2.address)),'@@@wwwww');
+      console.log(ethers.formatEther(await token.balanceOf(addr3.address)),'@@@wwwww');
+      console.log(ethers.formatEther(await token.balanceOf(addr4.address)),'@@@wwwww');
       const project = await frogFund.projects(0);
-      console.log(project.amountDistributed);
+      const ethContributions = await frogFund.ethContributions(0,addr2);
+      const projectInvestors = await frogFund.getInvestors(0)
+    //   console.log(project.amountDistributed);
+    //   console.log(ethers.formatEther(ethContributions),'wwwww');
+    //   console.log(projectInvestors,'wwwww');
+   
       // 半数通过，发放奖励+资金
+
+    //   验证资金到账
       expect(project.amountDistributed).to.equal(ethers.parseEther("90"));
+    //   验证奖励到账
+    const token2 = ethers.formatEther(await token.balanceOf(addr2.address))
+    const token3 = ethers.formatEther(await token.balanceOf(addr3.address))
+    const token4 = ethers.formatEther(await token.balanceOf(addr4.address))
+    console.log(token2);
+    expect(Number(token2)).to.equal(1001);
     });
   });
 });

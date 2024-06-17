@@ -28,6 +28,7 @@ contract FrogFund is Ownable {
     mapping(address => uint256) public creatorBalances; // 记录每个项目发起人的ERC20余额
     mapping(address => uint256) public creatorEthBalances; // 记录每个项目发起人的ETH余额
     mapping(uint256 => address[]) public projectInvestors; // 记录每个项目的投资者
+
     mapping(uint256 => mapping(uint256 => uint256)) public progressApprovals; // projectId => progress => approval count
     mapping(uint256 => mapping(uint256 => uint256)) public progressDisapprovals; // projectId => progress => disapproval count
 
@@ -42,6 +43,8 @@ contract FrogFund is Ownable {
     event ProjectCreated(
         uint256 indexed projectId,
         address indexed creator,
+        string _description,
+        string _link,
         uint256 goalAmount,
         uint256 deadline
     );
@@ -101,7 +104,14 @@ contract FrogFund is Ownable {
             amountDistributed: 0
         });
 
-        emit ProjectCreated(projectCount, msg.sender, _goalAmount, _deadline);
+        emit ProjectCreated(
+            projectCount,
+            msg.sender,
+            _description,
+            _link,
+            _goalAmount,
+            _deadline
+        );
         projectCount++;
     }
 
@@ -216,8 +226,8 @@ contract FrogFund is Ownable {
             progressApprovals[_projectId][_progress]++;
             if (progressApprovals[_projectId][_progress] >= requiredApprovals) {
                 distributeFunds(_projectId, _progress, project);
-                distributeRewards(_projectId, project);
             }
+            distributeRewards(_projectId, project, msg.sender);
         } else {
             progressDisapprovals[_projectId][_progress]++;
             if (
@@ -268,20 +278,22 @@ contract FrogFund is Ownable {
 
     function distributeRewards(
         uint256 _projectId,
-        Project storage project
+        Project storage project,
+        address caller
     ) internal {
         uint256 reward = 1 * 10 ** 18; // 设置奖励数额
         // token.approve(address(this), reward);
         address[] memory investors = projectInvestors[_projectId];
-        for (uint256 i = 0; i < investors.length; i++) {
-            address investor = investors[i];
-            if (ethContributions[_projectId][investor] > 0) {
-                require(
-                    token.transfer(investor, reward),
-                    "Investor reward transfer failed"
-                );
-            }
+        // for (uint256 i = 0; i < investors.length; i++) {
+        // address investor = investors[i];
+        require(ethContributions[_projectId][msg.sender] > 0, "no amount");
+        if (ethContributions[_projectId][msg.sender] > 0) {
+            require(
+                token.transfer(msg.sender, reward),
+                "Investor reward transfer failed"
+            );
         }
+        // }
         require(
             token.transfer(project.creator, reward),
             "Creator reward transfer failed"
@@ -368,5 +380,10 @@ contract FrogFund is Ownable {
         return
             progressApprovals[_projectId][project.currentProgress] >=
             requiredApprovals;
+    }
+    function getInvestors(
+        uint256 projectId
+    ) public view returns (address[] memory) {
+        return projectInvestors[projectId];
     }
 }
