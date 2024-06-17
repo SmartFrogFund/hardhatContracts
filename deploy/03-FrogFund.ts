@@ -11,6 +11,7 @@ const deployFrogFund: DeployFunction = async function (
   log(`Deploying 03-FrogFund deployer:`, deployer);
   const erc20 = await get("MyToken");
   const args = [erc20.address];
+//   const args = ["0x3422a9e6e1ac3609ea844c886ad4a3bd612f5e33"];
    log(`Deploying 03-FrogFund args:`, args);
   const frogFund = await deploy("FrogFund", {
     from: deployer,

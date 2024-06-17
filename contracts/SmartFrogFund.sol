@@ -102,7 +102,14 @@ contract FrogFund is Ownable {
             amountDistributed: 0
         });
 
-        emit ProjectCreated(projectCount, msg.sender, _goalAmount, _deadline);
+        emit ProjectCreated(
+            projectCount,
+            msg.sender,
+            _description,
+            _link,
+            _goalAmount,
+            _deadline
+        );
         projectCount++;
     }
 
