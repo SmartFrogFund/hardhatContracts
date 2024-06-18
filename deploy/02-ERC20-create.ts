@@ -11,14 +11,14 @@ const deployERC20: DeployFunction = async function (
   const { log } = deployments;
   const MyToken = await ethers.getContractFactory(MY_TOKEN);
   const MyTokenProxy = await upgrades.deployProxy(MyToken, [1000000], { initializer: 'initialize' });
-  log('MyToken deployed to:', MyTokenProxy.address);
+  log('MyToken deployed to:', await MyTokenProxy.getAddress());
 
-  // 保存代理合约地址到 deployments 中
+  // save the proxy contract name into the deployments
   await deployments.save(MY_TOKEN_PROXY, {
     address: await MyTokenProxy.getAddress(),
     abi: (await artifacts.readArtifact(MY_TOKEN)).abi
   });
 };
 
-deployERC20.tags = ["MyTokenCreate"];
+deployERC20.tags = ["MyTokenCreate", "all"];
 export default deployERC20;

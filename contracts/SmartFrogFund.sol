@@ -2,9 +2,10 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract FrogFund is Ownable {
+contract FrogFund is OwnableUpgradeable {
     struct Project {
         address payable creator; // 项目发起人
         string title; // 项目标题
@@ -19,7 +20,7 @@ contract FrogFund is Ownable {
     }
 
     IERC20 public token;
-    uint256 public projectCount = 0;
+    uint256 public projectCount;
     mapping(uint256 => Project) public projects;
     mapping(uint256 => mapping(address => uint256)) public contributions;
     mapping(uint256 => mapping(address => uint256)) public ethContributions;
@@ -76,7 +77,9 @@ contract FrogFund is Ownable {
         bool approved
     );
 
-    constructor(address _tokenAddress) Ownable(msg.sender) {
+    function initialize(address _tokenAddress) public initializer {
+        __Ownable_init(msg.sender);
+        projectCount = 0;
         token = IERC20(_tokenAddress);
         transferOwnership(msg.sender);
     }
@@ -115,10 +118,9 @@ contract FrogFund is Ownable {
         projectCount++;
     }
 
-    function supportProjectWithToken(
-        uint256 _projectId,
-        uint256 _amount
-    ) external {
+    function supportProjectWithToken(uint256 _projectId, uint256 _amount)
+        external
+    {
         Project storage project = projects[_projectId];
         require(
             block.timestamp < project.deadline,
@@ -243,18 +245,22 @@ contract FrogFund is Ownable {
         }
         emit ProgressReviewed(_projectId, _comment, _approved);
     }
-    function clearProgressRecords(
-        uint256 _projectId,
-        uint256 _progress
-    ) internal {
+
+    function clearProgressRecords(uint256 _projectId, uint256 _progress)
+        internal
+    {
         progressApprovals[_projectId][_progress] = 0;
         progressDisapprovals[_projectId][_progress] = 0;
     }
-    function getRequiredApprovals(
-        uint256 totalInvestors
-    ) internal pure returns (uint256) {
+
+    function getRequiredApprovals(uint256 totalInvestors)
+        internal
+        pure
+        returns (uint256)
+    {
         return (totalInvestors + 1) / 2; // 确保至少达到总投资人数的一半
     }
+
     function distributeFunds(
         uint256 _projectId,
         uint256 _progress,
@@ -281,7 +287,7 @@ contract FrogFund is Ownable {
         Project storage project,
         address caller
     ) internal {
-        uint256 reward = 1 * 10 ** 18; // 设置奖励数额
+        uint256 reward = 1 * 10**18; // 设置奖励数额
         // token.approve(address(this), reward);
         address[] memory investors = projectInvestors[_projectId];
         // for (uint256 i = 0; i < investors.length; i++) {
@@ -321,12 +327,18 @@ contract FrogFund is Ownable {
         }
     }
 
-    function getProjectDetails(
-        uint256 _projectId
-    )
+    function getProjectDetails(uint256 _projectId)
         external
         view
-        returns (address, uint256, uint256, uint256, bool, uint256, uint256)
+        returns (
+            address,
+            uint256,
+            uint256,
+            uint256,
+            bool,
+            uint256,
+            uint256
+        )
     {
         Project storage project = projects[_projectId];
         return (
@@ -340,9 +352,11 @@ contract FrogFund is Ownable {
         );
     }
 
-    function getPlatformBalance(
-        address _user
-    ) external view returns (uint256, uint256) {
+    function getPlatformBalance(address _user)
+        external
+        view
+        returns (uint256, uint256)
+    {
         uint256 totalTokenBalance = 0;
         uint256 totalEthBalance = 0;
         for (uint256 i = 0; i < projectCount; i++) {
@@ -352,23 +366,31 @@ contract FrogFund is Ownable {
         return (totalTokenBalance, totalEthBalance);
     }
 
-    function getCreatorBalance(
-        address _creator
-    ) external view returns (uint256) {
+    function getCreatorBalance(address _creator)
+        external
+        view
+        returns (uint256)
+    {
         return creatorBalances[_creator];
     }
 
-    function getCreatorEthBalance(
-        address _creator
-    ) external view returns (uint256) {
+    function getCreatorEthBalance(address _creator)
+        external
+        view
+        returns (uint256)
+    {
         return creatorEthBalances[_creator];
     }
+
     function transferTokens(address to, uint256 value) external returns (bool) {
         return token.transfer(to, value);
     }
-    function canSubmitNextProgress(
-        uint256 _projectId
-    ) external view returns (bool) {
+
+    function canSubmitNextProgress(uint256 _projectId)
+        external
+        view
+        returns (bool)
+    {
         Project storage project = projects[_projectId];
         uint256 totalInvestors = projectInvestors[_projectId].length;
         uint256 requiredApprovals = getRequiredApprovals(totalInvestors);
@@ -381,9 +403,12 @@ contract FrogFund is Ownable {
             progressApprovals[_projectId][project.currentProgress] >=
             requiredApprovals;
     }
-    function getInvestors(
-        uint256 projectId
-    ) public view returns (address[] memory) {
+
+    function getInvestors(uint256 projectId)
+        public
+        view
+        returns (address[] memory)
+    {
         return projectInvestors[projectId];
     }
 }
