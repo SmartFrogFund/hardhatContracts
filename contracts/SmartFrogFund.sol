@@ -43,6 +43,9 @@ contract FrogFund is Ownable {
     event ProjectCreated(
         uint256 indexed projectId,
         address indexed creator,
+        string _description,
+        string _link,
+        string _title,
         uint256 goalAmount,
         uint256 deadline
     );
@@ -102,7 +105,15 @@ contract FrogFund is Ownable {
             amountDistributed: 0
         });
 
-        emit ProjectCreated(projectCount, msg.sender, _goalAmount, _deadline);
+        emit ProjectCreated(
+            projectCount,
+            msg.sender,
+            _description,
+            _link,
+            _title,
+            _goalAmount,
+            _deadline
+        );
         projectCount++;
     }
 
