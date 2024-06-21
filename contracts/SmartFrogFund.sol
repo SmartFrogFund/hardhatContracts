@@ -74,7 +74,8 @@ contract FrogFund is Ownable {
     event ProgressReviewed(
         uint256 indexed projectId,
         string comment,
-        bool approved
+        bool approved,
+        uint256 currentProgress
     );
 
     constructor(address _tokenAddress) Ownable(msg.sender) {
@@ -243,7 +244,12 @@ contract FrogFund is Ownable {
                 clearProgressRecords(_projectId, _progress);
             }
         }
-        emit ProgressReviewed(_projectId, _comment, _approved);
+        emit ProgressReviewed(
+            _projectId,
+            _comment,
+            _approved,
+            project.currentProgress
+        );
     }
     function clearProgressRecords(
         uint256 _projectId,
