@@ -63,7 +63,9 @@ const config: HardhatUserConfig = {
 		hardhat: {
 			chainId: 31337,
 		},
-
+  localhost: {
+      url: "http://localhost:8545",
+    },
 		sepolia: {
 			chainId: 11155111,
 			url: SEPOLIA_RPC_URL,
