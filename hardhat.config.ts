@@ -27,7 +27,7 @@ const devConfig: HardhatUserConfig = {
 			chainId: 31337,
 		},
 		 localhost: {
-      url: "http://localhost:8545",
+       url: "http://127.0.0.1:8545",
     },
 	},
 	namedAccounts: {
@@ -64,7 +64,7 @@ const config: HardhatUserConfig = {
 			chainId: 31337,
 		},
   localhost: {
-      url: "http://localhost:8545",
+      url: "http://127.0.0.1:8545",
     },
 		sepolia: {
 			chainId: 11155111,
