@@ -26,9 +26,9 @@ const devConfig: HardhatUserConfig = {
 		hardhat: {
 			chainId: 31337,
 		},
-		localhost: {
-			chainId: 31337,
-		},
+		 localhost: {
+      url: "http://localhost:8545",
+    },
 	},
 	namedAccounts: {
 		deployer: {
