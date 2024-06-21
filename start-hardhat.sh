@@ -7,4 +7,4 @@ DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 cd $DIR
 
 # 使用项目内的 pnpm 和 hardhat 启动 hardhat node
-pnpm ./node_modules/.bin/hardhat node  --hostname 0.0.0.0
+pnpm ./node_modules/.bin/hardhat node 
