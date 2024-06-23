@@ -18,8 +18,16 @@ const deployFrogFund: DeployFunction = async function (
     args,
     log: true,
   });
-
+  // 获取部署交易的交易对象
+  const deployTx = await ethers.provider.getTransaction(frogFund.transactionHash as string);
+  
+  // 等待交易被挖掘
+  const receipt = await deployTx?.wait();
+  
+  // 获取区块高度
+  const blockNumber = receipt?.blockNumber;
   log(`Deploying 03-FrogFund address : ${frogFund.address}`);
+  log(`Deployed at block number: ${blockNumber}`);
 };
 
 deployFrogFund.tags = ["FrogFund"];

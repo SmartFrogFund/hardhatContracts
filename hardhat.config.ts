@@ -26,9 +26,9 @@ const devConfig: HardhatUserConfig = {
 		hardhat: {
 			chainId: 31337,
 		},
-		localhost: {
-			chainId: 31337,
-		},
+		 localhost: {
+       url: "http://127.0.0.1:8545",
+    },
 	},
 	namedAccounts: {
 		deployer: {
@@ -63,9 +63,9 @@ const config: HardhatUserConfig = {
 		hardhat: {
 			chainId: 31337,
 		},
-		localhost: {
-			chainId: 31337,
-		},
+  localhost: {
+      url: "http://127.0.0.1:8545",
+    },
 		sepolia: {
 			chainId: 11155111,
 			url: SEPOLIA_RPC_URL,
