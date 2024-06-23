@@ -9,7 +9,7 @@ yarn hardhat sourcifySubmit --contract-name "FrogFund" --source-name "contracts/
 npx hardhat ignition deploy ignition/modules/Lock.ts --network sepolia --verify
 
 
-npx hardhat verify --network lineaSepolia 0xd515588BB7434479329F53BC4580B5D0965b5E5D "0xCe0c9040A10275BDc6856e5C2077AC4F9338f826"
+npx hardhat verify --network lineaSepolia 0xdf0234981D3bB5140D173aFBeBB92C1a5524E4db "0xCe0c9040A10275BDc6856e5C2077AC4F9338f826"
 npx hardhat verify --network lineaSepolia 0xCe0c9040A10275BDc6856e5C2077AC4F9338f826 "1000000"
 
 npx hardhat deploy --tags "FrogFund" --network lineaSepolia

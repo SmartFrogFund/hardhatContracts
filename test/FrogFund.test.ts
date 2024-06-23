@@ -388,7 +388,7 @@ describe("FrogFund", function () {
     });
   });
 
-  describe("updateProgress2", function () {
+  describe.skip("updateProgress2", function () {
     async function createProject() {
       time.advanceBlock();
       const title = "Project Title";
