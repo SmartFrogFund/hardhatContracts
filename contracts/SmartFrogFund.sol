@@ -75,7 +75,8 @@ contract FrogFund is Ownable {
         uint256 indexed projectId,
         string comment,
         bool approved,
-        uint256 currentProgress
+        uint256 currentProgress,
+        address Investor
     );
 
     constructor(address _tokenAddress) Ownable(msg.sender) {
@@ -191,11 +192,7 @@ contract FrogFund is Ownable {
             "Progress must be greater than current progress"
         );
         if (project.currentProgress > 0) {
-        
-            require(
-                totalInvestors>0,
-                "No investors to approve progress"
-            );
+            require(totalInvestors > 0, "No investors to approve progress");
             require(
                 progressApprovals[_projectId][project.currentProgress] >=
                     requiredApprovals,
@@ -209,6 +206,7 @@ contract FrogFund is Ownable {
         emit ProgressUpdated(_projectId, _progress, _details);
     }
 
+    mapping(uint256 => mapping(uint256 => mapping(address => bool))) public hasReviewed;
     function reviewProgress(
         uint256 _projectId,
         uint256 _progress,
@@ -224,6 +222,12 @@ contract FrogFund is Ownable {
             project.currentAmount >= project.goalAmount,
             "Project has not reached goal amount"
         );
+        require(
+            !hasReviewed[_projectId][_progress][msg.sender],
+            "Investor has already reviewed this progress"
+        );
+
+        hasReviewed[_projectId][_progress][msg.sender] = true;
 
         approvalComments[_projectId][_progress] = _comment;
 
@@ -253,7 +257,8 @@ contract FrogFund is Ownable {
             _projectId,
             _comment,
             _approved,
-            project.currentProgress
+            project.currentProgress,
+            msg.sender
         );
     }
     function clearProgressRecords(
