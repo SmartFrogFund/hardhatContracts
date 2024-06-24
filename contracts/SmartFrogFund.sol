@@ -191,8 +191,7 @@ contract FrogFund is Ownable {
             "Progress must be greater than current progress"
         );
         if (project.currentProgress > 0) {
-            uint256 totalInvestors = projectInvestors[_projectId].length;
-            uint256 requiredApprovals = getRequiredApprovals(totalInvestors);
+        
             require(
                 totalInvestors>0,
                 "No investors to approve progress"
