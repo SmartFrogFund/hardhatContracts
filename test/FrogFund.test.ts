@@ -419,6 +419,71 @@ describe("FrogFund", function () {
       const updatedProject = await frogFund.projects(projectId);
       expect(updatedProject.currentProgress).to.equal(30);
     });
+    it("70-50,50-30,30-0", async function () {
+    const projectId = 0;
+    const supportAmount = ethers.parseUnits("100", 18);
+    // Investor 2 supports
+    await expect(
+      frogFund
+        .connect(addr2)
+        .supportProjectWithEth(projectId, { value: supportAmount })
+    )
+      .to.emit(frogFund, "ProjectFunded")
+      .withArgs(projectId, addr2.address, supportAmount, true);
+    // Investor 3 supports
+    await expect(
+      frogFund
+        .connect(addr3)
+        .supportProjectWithEth(projectId, { value: supportAmount })
+    )
+      .to.emit(frogFund, "ProjectFunded")
+      .withArgs(projectId, addr3.address, supportAmount, true);
+
+    // Investor 4 supports
+    await expect(
+      frogFund
+        .connect(addr4)
+        .supportProjectWithEth(projectId, { value: supportAmount })
+    )
+      .to.emit(frogFund, "ProjectFunded")
+      .withArgs(projectId, addr4.address, supportAmount, true);
+
+    // Test progress rollback from 30% to 0%
+    await frogFund
+      .connect(addr1)
+      .updateProgress(0, 30, "Project is 30% completed");
+
+    await frogFund.connect(addr2).reviewProgress(0, 30, "Disapprove", false);
+    await frogFund.connect(addr3).reviewProgress(0, 30, "Disapprove", false);
+
+    let project = await frogFund.projects(0);
+    // Verify progress has reverted to 0
+    expect(project.currentProgress).to.equal(0);
+
+    // Test progress rollback from 50% to 30%
+    await frogFund.connect(addr1).updateProgress(0, 30, "Project is 30% completed");
+    await frogFund.connect(addr2).reviewProgress(0, 30, "Approve", true);
+    await frogFund.connect(addr3).reviewProgress(0, 30, "Approve", true);
+    await frogFund.connect(addr1).updateProgress(0, 50, "Project is 50% completed");
+    await frogFund.connect(addr2).reviewProgress(0, 50, "Disapprove", false);
+    await frogFund.connect(addr3).reviewProgress(0, 50, "Disapprove", false);
+
+    project = await frogFund.projects(0);
+    // Verify progress has reverted to 30
+    expect(project.currentProgress).to.equal(30);
+
+    // Test progress rollback from 70% to 50%
+    await frogFund.connect(addr1).updateProgress(0, 50, "Project is 50% completed");
+    await frogFund.connect(addr2).reviewProgress(0, 50, "Approve", true);
+    await frogFund.connect(addr3).reviewProgress(0, 50, "Approve", true);
+    await frogFund.connect(addr1).updateProgress(0, 70, "Project is 70% completed");
+    await frogFund.connect(addr2).reviewProgress(0, 70, "Disapprove", false);
+    await frogFund.connect(addr3).reviewProgress(0, 70, "Disapprove", false);
+
+    project = await frogFund.projects(0);
+    // Verify progress has reverted to 50
+    expect(project.currentProgress).to.equal(50);
+  });
   });
 
   describe.skip("updateProgress2", function () {
