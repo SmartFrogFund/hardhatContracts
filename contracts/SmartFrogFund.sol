@@ -206,7 +206,19 @@ contract FrogFund is Ownable {
         emit ProgressUpdated(_projectId, _progress, _details);
     }
 
-    mapping(uint256 => mapping(uint256 => mapping(address => bool))) public hasReviewed;
+    mapping(uint256 => mapping(uint256 => mapping(address => bool)))
+        public hasReviewed;
+
+    function resetInvestorReviews(
+        uint256 _projectId,
+        uint256 _progress
+    ) internal {
+        address[] memory investors = projectInvestors[_projectId];
+        for (uint256 i = 0; i < investors.length; i++) {
+            address investor = investors[i];
+            hasReviewed[_projectId][_progress][investor] = false;
+        }
+    }
     function reviewProgress(
         uint256 _projectId,
         uint256 _progress,
@@ -257,7 +269,7 @@ contract FrogFund is Ownable {
             _projectId,
             _comment,
             _approved,
-            project.currentProgress,
+            _progress,
             msg.sender
         );
     }
@@ -267,6 +279,7 @@ contract FrogFund is Ownable {
     ) internal {
         progressApprovals[_projectId][_progress] = 0;
         progressDisapprovals[_projectId][_progress] = 0;
+        resetInvestorReviews(_projectId, _progress);// 重置投资者的审核状态
     }
     function getRequiredApprovals(
         uint256 totalInvestors
