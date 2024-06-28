@@ -386,6 +386,39 @@ describe("FrogFund", function () {
       console.log(token2);
       expect(Number(token2)).to.equal(1001);
     });
+    it("Should allow investors to re-review progress if it was previously disapproved", async function () {
+      const projectId = 0;
+      const supportAmount = ethers.parseUnits("300", 18);
+      await expect(
+        frogFund
+          .connect(addr2)
+          .supportProjectWithEth(projectId, { value: supportAmount })
+      )
+        .to.emit(frogFund, "ProjectFunded")
+        .withArgs(projectId, addr2.address, supportAmount, true);
+
+      await frogFund
+        .connect(addr1)
+        .updateProgress(projectId, 30, "Project is 30% completed");
+
+      await frogFund
+        .connect(addr2)
+        .reviewProgress(projectId, 30, "Disapprove", false);
+
+      const project = await frogFund.projects(projectId);
+      expect(project.currentProgress).to.equal(0);
+
+      // Attempting to re-review the same progress after disapproval
+      await frogFund
+        .connect(addr1)
+        .updateProgress(projectId, 30, "Project is 30% completed again");
+      await frogFund
+        .connect(addr2)
+        .reviewProgress(projectId, 30, "Approve after disapproval", true);
+
+      const updatedProject = await frogFund.projects(projectId);
+      expect(updatedProject.currentProgress).to.equal(30);
+    });
   });
 
   describe.skip("updateProgress2", function () {
