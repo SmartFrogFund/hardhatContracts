@@ -17,6 +17,7 @@ const {
 	SEPOLIA_PRIVATE_KEY,
 	COINAMARKETCAP_API_KEY,
 	ETHERSCAN_API_KEY,
+  TEST_GETH_PRIVATE_KEY
 } = process.env;
 
 const devConfig: HardhatUserConfig = {
@@ -77,6 +78,13 @@ const config: HardhatUserConfig = {
 			timeout: 200000, // 增加超时时间为200秒
             gasPrice:118770660,
             minGasPrice:0,
+		},
+    testGeth: {
+			url: 'http://42.192.203.239:8545',
+			accounts: [`0x${process.env.TEST_GETH_PRIVATE_KEY}`], // 你的私钥，需要将其保存到环境变量中
+			timeout: 200000, // 增加超时时间为200秒
+      gasPrice:118770660,
+      minGasPrice:0,
 		},
 	},
 	etherscan: {
